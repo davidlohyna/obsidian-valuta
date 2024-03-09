@@ -1,95 +1,77 @@
-import { Menu, Notice, Plugin } from "obsidian";
-import { ExampleSettingTab } from "./settings";
+import { Menu, moment, Notice, Plugin } from "obsidian";
+import { ValutaSettingTab } from "./settings";
 
-interface ExamplePluginSettings {
-  dateFormat: string;
-  timeFormat: string;
+interface ValutaPluginSettings {
+  defaultCurrency: string;
+  updateFrequency: integer;
 }
 
-const DEFAULT_SETTINGS: Partial<ExamplePluginSettings> = {
-  dateFormat: "YYYY-MM-DD",
-  timeFormat: "HH:mm",
+const DEFAULT_SETTINGS: Partial<ValutaPluginSettings> = {
+  defaultCurrency: "EUR",
+  updateFrequency: "30",
 };
 
-export default class ExamplePlugin extends Plugin {
-  settings: ExamplePluginSettings;
+const ALL_EMOJIS: Record<string, string> = {
+  ":eur:": "💶",
+  ":usd:": "💵",
+  ":gbp:": "💷",
+};
+
+export default class ValutaPlugin extends Plugin {
+  settings: ValutaPluginSettings;
+  statusBar: HTMLElement;
 
   async onload() {
+
+		// This loads settings
     await this.loadSettings();
 
-    this.addSettingTab(new ExampleSettingTab(this.app, this));
+    // This adds setting tab
+    this.addSettingTab(new ValutaSettingTab(this.app, this));
 
-    // This is a command in palette that send a message to console
+    this.statusBar = this.addStatusBarItem();
+
+    this.updateStatusBar();
+
+    this.registerInterval(
+      window.setInterval(() => this.updateStatusBar(), 1000)
+    );
+
+
+	// This is a post processor
+	this.registerMarkdownPostProcessor((element, context) => {
+      const codeblocks = element.findAll("code");
+
+      for (let codeblock of codeblocks) {
+        const text = codeblock.innerText.trim();
+        if (text[0] === ":" && text[text.length - 1] === ":") {
+          const emojiEl = codeblock.createSpan({
+            text: ALL_EMOJIS[text] ?? text,
+          });
+          codeblock.replaceWith(emojiEl);
+        }
+      }
+    });
+
+    // This is a command in palette that reutrns a notice
 
     this.addCommand({
-      id: "print-greeting-to-console",
-      name: "Print greeting to console",
+      id: "update-currency-rates",
+      name: "Update currency rates",
       callback: () => {
-        console.log("Hey, you!");
+		new Notice("Currency rates updated!");
       },
     });
 
-    // This is a ribbon icon that has a contex menu
+    // This is a ribbon icon that returns a notice
 
-    this.addRibbonIcon("dice", "Open menu", (event) => {
-      const menu = new Menu();
+    this.addRibbonIcon("circle-dollar-sign", "Update currency rates", () => {
+		new Notice("Currency rates updated!")
+		});
+  }
 
-      // This is a context menu icon
-
-      menu.addItem((item) =>
-        item
-          .setTitle("Copy")
-          .setIcon("documents")
-          .onClick(() => {
-            new Notice("Copied");
-          })
-      );
-
-      // This is a context menu icon
-
-      menu.addItem((item) =>
-        item
-          .setTitle("Paste")
-          .setIcon("paste")
-          .onClick(() => {
-            new Notice("Pasted");
-          })
-      );
-
-      // This triggers the event on mouse click
-
-      menu.showAtMouseEvent(event);
-    });
-
-    // This adds a file menu event
-
-    this.registerEvent(
-      this.app.workspace.on("file-menu", (menu, file) => {
-        menu.addItem((item) => {
-          item
-            .setTitle("Print file path 👈")
-            .setIcon("document")
-            .onClick(async () => {
-              new Notice(file.path);
-            });
-        });
-      })
-    );
-
-    // this add a editor menu event
-
-    this.registerEvent(
-        this.app.workspace.on("editor-menu", (menu, editor, view) => {
-          menu.addItem((item) => {
-            item
-              .setTitle("Print file path 👈")
-              .setIcon("document")
-              .onClick(async () => {
-                new Notice(view.file.path);
-              });
-          });
-        })
-      );
+  updateStatusBar() {
+    this.statusBar.setText(moment().format("H:mm:ss"));
   }
 
   async loadSettings() {

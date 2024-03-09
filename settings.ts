@@ -1,10 +1,10 @@
-import ExamplePlugin from "./main";
+import ValutaPlugin from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
-export class ExampleSettingTab extends PluginSettingTab {
-  plugin: ExamplePlugin;
+export class ValutaSettingTab extends PluginSettingTab {
+  plugin: ValutaPlugin;
 
-  constructor(app: App, plugin: ExamplePlugin) {
+  constructor(app: App, plugin: ValutaPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -17,27 +17,27 @@ export class ExampleSettingTab extends PluginSettingTab {
 	containerEl.createEl("h2", { text: 'Valuta Plugin - Settings' });
 
     new Setting(containerEl)
-      .setName("Date format")
-      .setDesc("Default date format")
+      .setName("Defaul currency")
+      .setDesc("Default currency code.")
       .addText((text) =>
         text
-          .setPlaceholder("MMMM dd, yyyy")
-          .setValue(this.plugin.settings.dateFormat)
+          .setPlaceholder("EUR")
+          .setValue(this.plugin.settings.defaultCurrency)
           .onChange(async (value) => {
-            this.plugin.settings.dateFormat = value;
+            this.plugin.settings.defaultCurrency = value;
             await this.plugin.saveSettings();
           })
       );
 
     new Setting(containerEl)
-      .setName("Time format")
-      .setDesc("Default Time format")
+      .setName("Update frequency")
+      .setDesc("Update frequency of exchange rates in minutes.")
       .addText((text) =>
         text
-          .setPlaceholder("HH:mm")
-          .setValue(this.plugin.settings.timeFormat)
+          .setPlaceholder("30")
+          .setValue(this.plugin.settings.updateFrequency)
           .onChange(async (value) => {
-            this.plugin.settings.timeFormat = value;
+            this.plugin.settings.updateFrequency = value;
             await this.plugin.saveSettings();
           })
       );
