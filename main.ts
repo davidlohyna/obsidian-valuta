@@ -1,132 +1,102 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { Menu, Notice, Plugin } from "obsidian";
+import { ExampleSettingTab } from "./settings";
 
-interface MyPluginSettings {
-	mySetting: string;
+interface ExamplePluginSettings {
+  dateFormat: string;
+  timeFormat: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
+const DEFAULT_SETTINGS: Partial<ExamplePluginSettings> = {
+  dateFormat: "YYYY-MM-DD",
+  timeFormat: "HH:mm",
+};
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class ExamplePlugin extends Plugin {
+  settings: ExamplePluginSettings;
 
-	async onload() {
-		await this.loadSettings();
+  async onload() {
+    await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+    this.addSettingTab(new ExampleSettingTab(this.app, this));
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
+    // This is a command in palette that send a message to console
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
+    this.addCommand({
+      id: "print-greeting-to-console",
+      name: "Print greeting to console",
+      callback: () => {
+        console.log("Hey, you!");
+      },
+    });
 
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
-		});
+    // This is a ribbon icon that has a contex menu
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+    this.addRibbonIcon("dice", "Open menu", (event) => {
+      const menu = new Menu();
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
+      // This is a context menu icon
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-	}
+      menu.addItem((item) =>
+        item
+          .setTitle("Copy")
+          .setIcon("documents")
+          .onClick(() => {
+            new Notice("Copied");
+          })
+      );
 
-	onunload() {
+      // This is a context menu icon
 
-	}
+      menu.addItem((item) =>
+        item
+          .setTitle("Paste")
+          .setIcon("paste")
+          .onClick(() => {
+            new Notice("Pasted");
+          })
+      );
 
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
+      // This triggers the event on mouse click
 
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-}
+      menu.showAtMouseEvent(event);
+    });
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+    // This adds a file menu event
 
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
+    this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => {
+        menu.addItem((item) => {
+          item
+            .setTitle("Print file path 👈")
+            .setIcon("document")
+            .onClick(async () => {
+              new Notice(file.path);
+            });
+        });
+      })
+    );
 
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
+    // this add a editor menu event
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+    this.registerEvent(
+        this.app.workspace.on("editor-menu", (menu, editor, view) => {
+          menu.addItem((item) => {
+            item
+              .setTitle("Print file path 👈")
+              .setIcon("document")
+              .onClick(async () => {
+                new Notice(view.file.path);
+              });
+          });
+        })
+      );
+  }
 
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
 
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
-	}
+  async saveSettings() {
+    await this.saveData(this.settings);
+  }
 }
