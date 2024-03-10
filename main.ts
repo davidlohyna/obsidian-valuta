@@ -1,14 +1,13 @@
 import { Menu, moment, Notice, Plugin } from "obsidian";
 import { ValutaSettingTab } from "./settings";
+import { ExchangeRates } from "./exchange-rates"
 
 interface ValutaPluginSettings {
   defaultCurrency: string;
-  updateFrequency: integer;
 }
 
 const DEFAULT_SETTINGS: Partial<ValutaPluginSettings> = {
   defaultCurrency: "EUR",
-  updateFrequency: "30",
 };
 
 const ALL_EMOJIS: Record<string, string> = {
@@ -23,23 +22,17 @@ export default class ValutaPlugin extends Plugin {
 
   async onload() {
 
-		// This loads settings
+    // This loads settings
     await this.loadSettings();
 
     // This adds setting tab
     this.addSettingTab(new ValutaSettingTab(this.app, this));
 
-    this.statusBar = this.addStatusBarItem();
+    // Fetch rates on startup
+    await this.fetchAndHandleRates();
 
-    this.updateStatusBar();
-
-    this.registerInterval(
-      window.setInterval(() => this.updateStatusBar(), 1000)
-    );
-
-
-	// This is a post processor
-	this.registerMarkdownPostProcessor((element, context) => {
+    // This is a post processor
+    this.registerMarkdownPostProcessor((element, context) => {
       const codeblocks = element.findAll("code");
 
       for (let codeblock of codeblocks) {
@@ -53,25 +46,28 @@ export default class ValutaPlugin extends Plugin {
       }
     });
 
-    // This is a command in palette that reutrns a notice
-
-    this.addCommand({
-      id: "update-currency-rates",
-      name: "Update currency rates",
-      callback: () => {
-		new Notice("Currency rates updated!");
-      },
+    // This is a ribbon icon that returns updates rates and sends a notice
+    this.addRibbonIcon("circle-dollar-sign", "Update rates", async () => {
+      await this.fetchAndHandleRates();
+      new Notice("Rates updated!");
     });
 
-    // This is a ribbon icon that returns a notice
-
-    this.addRibbonIcon("circle-dollar-sign", "Update currency rates", () => {
-		new Notice("Currency rates updated!")
-		});
-  }
-
-  updateStatusBar() {
-    this.statusBar.setText(moment().format("H:mm:ss"));
+    // This command updates rates quote of currencies
+    this.addCommand({
+      id: "update-rates",
+      name: "Update rates",
+      callback: async () => {
+        try {
+          const result = await this.fetchRates();
+          if (result) {
+            this.handleFetchedRates(result);
+          }
+        } catch (error) {
+          console.error('Error fetching or handling data:', error);
+        }
+        new Notice("Rates updated!");
+      },
+    });
   }
 
   async loadSettings() {
@@ -81,4 +77,44 @@ export default class ValutaPlugin extends Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
   }
+
+  // Fetch and handle rates using fetchRates() and handleFetchedRates()
+  async fetchAndHandleRates(): Promise<void> {
+    try {
+      const result = await this.fetchRates();
+      if (result) {
+        this.handleFetchedRates(result);
+      }
+    } catch (error) {
+      console.error('Error fetching or handling data:', error);
+    }
+  }
+
+  // Fetch rates from API. Rates quote against the Euro by default.
+  // Quote against other currencies using the 'from' parameter. (e.g., /latest?from=USD)
+  async fetchRates(): Promise<ExchangeRates | undefined> {
+    const host = 'api.frankfurter.app';
+
+    try {
+      const response = await fetch(`https://${host}/latest`);
+      const data = await response.json();
+
+      // Work with the data as needed
+      // console.log(data);
+
+      // You can return the data or perform further operations here
+      return data as ExchangeRates;
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // Handle the error as needed
+      return undefined;
+    }
+  }
+
+  handleFetchedRates(data: ExchangeRates): void {
+    // Your logic to handle the fetched data within your Obsidian plugin
+    console.log(data);
+    // Update Obsidian UI or perform any other necessary actions
+  }
 }
+

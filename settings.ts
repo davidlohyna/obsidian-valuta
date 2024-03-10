@@ -28,18 +28,5 @@ export class ValutaSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
-
-    new Setting(containerEl)
-      .setName("Update frequency")
-      .setDesc("Update frequency of exchange rates in minutes.")
-      .addText((text) =>
-        text
-          .setPlaceholder("30")
-          .setValue(this.plugin.settings.updateFrequency)
-          .onChange(async (value) => {
-            this.plugin.settings.updateFrequency = value;
-            await this.plugin.saveSettings();
-          })
-      );
   }
 }
