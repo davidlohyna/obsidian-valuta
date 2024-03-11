@@ -3,11 +3,11 @@ import { ValutaSettingTab } from "./settings";
 import { ExchangeRates } from "./exchange-rates"
 
 interface ValutaPluginSettings {
-  defaultCurrency: string;
+  baseCurrency: string;
 }
 
 const DEFAULT_SETTINGS: Partial<ValutaPluginSettings> = {
-  defaultCurrency: "EUR",
+  baseCurrency: "EUR",
 };
 
 const ALL_EMOJIS: Record<string, string> = {
@@ -58,7 +58,7 @@ export default class ValutaPlugin extends Plugin {
       name: "Update rates",
       callback: async () => {
         try {
-          const result = await this.fetchRates();
+          const result = await this.fetchRates(this.settings.baseCurrency);
           if (result) {
             this.handleFetchedRates(result);
           }
@@ -81,7 +81,7 @@ export default class ValutaPlugin extends Plugin {
   // Fetch and handle rates using fetchRates() and handleFetchedRates()
   async fetchAndHandleRates(): Promise<void> {
     try {
-      const result = await this.fetchRates();
+      const result = await this.fetchRates(this.settings.baseCurrency);
       if (result) {
         this.handleFetchedRates(result);
       }
