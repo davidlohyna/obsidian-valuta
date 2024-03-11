@@ -17,8 +17,8 @@ export class ValutaSettingTab extends PluginSettingTab {
 	containerEl.createEl("h2", { text: 'Valuta Plugin - Settings' });
 
     new Setting(containerEl)
-      .setName("Defaul currency")
-      .setDesc("Default currency code.")
+      .setName("Base currency")
+      .setDesc("Base currency code. Currency you want other currencies to exchange to.")
       .addText((text) =>
         text
           .setPlaceholder("EUR")
