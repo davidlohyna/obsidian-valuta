@@ -92,11 +92,11 @@ export default class ValutaPlugin extends Plugin {
 
   // Fetch rates from API. Rates quote against the Euro by default.
   // Quote against other currencies using the 'from' parameter. (e.g., /latest?from=USD)
-  async fetchRates(): Promise<ExchangeRates | undefined> {
+  async fetchRates(baseCurrency: string): Promise<ExchangeRates | undefined> {
     const host = 'api.frankfurter.app';
 
     try {
-      const response = await fetch(`https://${host}/latest`);
+      const response = await fetch(`https://${host}/latest?from=${baseCurrency}`);
       const data = await response.json();
 
       // Work with the data as needed

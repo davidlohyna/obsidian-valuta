@@ -22,9 +22,9 @@ export class ValutaSettingTab extends PluginSettingTab {
       .addText((text) =>
         text
           .setPlaceholder("EUR")
-          .setValue(this.plugin.settings.defaultCurrency)
+          .setValue(this.plugin.settings.baseCurrency)
           .onChange(async (value) => {
-            this.plugin.settings.defaultCurrency = value;
+            this.plugin.settings.baseCurrency = value;
             await this.plugin.saveSettings();
           })
       );
