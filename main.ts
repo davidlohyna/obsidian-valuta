@@ -1,20 +1,6 @@
 import { Menu, moment, Notice, Plugin } from "obsidian";
-import { ValutaSettingTab } from "./settings";
-import { ExchangeRates } from "./exchange-rates"
+import { ALL_EMOJIS, DEFAULT_SETTINGS, ExchangeRates, ValutaPluginSettings, ValutaSettingTab } from "./settings";
 
-interface ValutaPluginSettings {
-  baseCurrency: string;
-}
-
-const DEFAULT_SETTINGS: Partial<ValutaPluginSettings> = {
-  baseCurrency: "EUR",
-};
-
-const ALL_EMOJIS: Record<string, string> = {
-  ":eur:": "💶",
-  ":usd:": "💵",
-  ":gbp:": "💷",
-};
 
 export default class ValutaPlugin extends Plugin {
   settings: ValutaPluginSettings;
@@ -47,15 +33,15 @@ export default class ValutaPlugin extends Plugin {
     });
 
     // This is a ribbon icon that returns updates rates and sends a notice
-    this.addRibbonIcon("circle-dollar-sign", "Update rates", async () => {
+    this.addRibbonIcon("circle-dollar-sign", "Update valuta", async () => {
       await this.fetchAndHandleRates();
-      new Notice("Rates updated!");
+      new Notice("Valuta updated!");
     });
 
     // This command updates rates quote of currencies
     this.addCommand({
-      id: "update-rates",
-      name: "Update rates",
+      id: "update-valuta",
+      name: "Update valuta",
       callback: async () => {
         try {
           const result = await this.fetchRates(this.settings.baseCurrency);
@@ -63,9 +49,9 @@ export default class ValutaPlugin extends Plugin {
             this.handleFetchedRates(result);
           }
         } catch (error) {
-          console.error('Error fetching or handling data:', error);
+          console.error('Error fetching or handling rates:', error);
         }
-        new Notice("Rates updated!");
+        new Notice("Valuta updated!");
       },
     });
   }
@@ -86,7 +72,7 @@ export default class ValutaPlugin extends Plugin {
         this.handleFetchedRates(result);
       }
     } catch (error) {
-      console.error('Error fetching or handling data:', error);
+      console.error('Error fetching or handling rates:', error);
     }
   }
 
@@ -105,7 +91,7 @@ export default class ValutaPlugin extends Plugin {
       // You can return the data or perform further operations here
       return data as ExchangeRates;
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching rates:', error);
       // Handle the error as needed
       return undefined;
     }

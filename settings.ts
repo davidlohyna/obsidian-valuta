@@ -1,6 +1,29 @@
 import ValutaPlugin from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
+
+export interface ValutaPluginSettings {
+  baseCurrency: string;
+}
+
+export const DEFAULT_SETTINGS: Partial<ValutaPluginSettings> = {
+  baseCurrency: "EUR",
+};
+
+export const ALL_EMOJIS: Record<string, string> = {
+  ":eur:": "💶",
+  ":usd:": "💵",
+  ":gbp:": "💷",
+};
+
+// API query settings
+export interface ExchangeRates {
+    amount: number;
+    base:   string;
+    date:   Date;
+    rates:  { [key: string]: number };
+}
+
 export class ValutaSettingTab extends PluginSettingTab {
   plugin: ValutaPlugin;
 
@@ -18,7 +41,7 @@ export class ValutaSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Base currency")
-      .setDesc("Base currency code. Currency you want other currencies to exchange to.")
+      .setDesc("Base currency code of choice. Example: EUR or eur")
       .addText((text) =>
         text
           .setPlaceholder("EUR")
