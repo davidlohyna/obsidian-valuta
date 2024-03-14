@@ -7,7 +7,7 @@ export interface ValutaPluginSettings {
 }
 
 export const DEFAULT_SETTINGS: Partial<ValutaPluginSettings> = {
-  baseCurrency: "EUR",
+  baseCurrency: "USD",
 };
 
 export const ALL_EMOJIS: Record<string, string> = {
