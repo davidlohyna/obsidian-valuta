@@ -1,5 +1,7 @@
 import { Menu, moment, Notice, Plugin } from "obsidian";
-import { ALL_EMOJIS, DEFAULT_SETTINGS, ExchangeRates, ValutaPluginSettings, ValutaSettingTab } from "./settings";
+import { ExchangeRates, Valuta, ValutaPluginSettings, ValutaSettingTab } from "./settings";
+import { isNumber, round } from "./helpers";
+
 
 
 export default class ValutaPlugin extends Plugin {
@@ -10,31 +12,45 @@ export default class ValutaPlugin extends Plugin {
 
     // This loads settings
     await this.loadSettings();
+	console.log('Settings loaded')
 
     // This adds setting tab
     this.addSettingTab(new ValutaSettingTab(this.app, this));
 
-    // Fetch rates on startup
-    await this.fetchAndHandleRates();
 
-    // This is a post processor
-    this.registerMarkdownPostProcessor((element, context) => {
-      const codeblocks = element.findAll("code");
+	// This is a post processor
+	if (this.settings.baseCurrency) {
+		// Fetch rates on startup if baseCurrency is set
+		const exchangeRates = await this.fetchRates(this.settings.baseCurrency);
+		console.log(exchangeRates.base)
 
-      for (let codeblock of codeblocks) {
-        const text = codeblock.innerText.trim();
-        if (text[0] === ":" && text[text.length - 1] === ":") {
-          const emojiEl = codeblock.createSpan({
-            text: ALL_EMOJIS[text] ?? text,
-          });
-          codeblock.replaceWith(emojiEl);
-        }
-      }
-    });
+		this.registerMarkdownPostProcessor((element, context) => {
+			const codeblocks = element.findAll("code");
+
+			for (let codeblock of codeblocks) {
+				const text = codeblock.innerText.trim();
+
+				// Ensure to check codeblocks with correct plugin syntax only
+				if (text[3] === ":" && isNumber(text[4])) {
+					const currency: string = text.substring(0, text.indexOf(':'));
+
+					// Validate whether amount is numberic
+					let amount: string  = text.substring(4);
+					if (!isNumber(amount)) {
+						codeblock.replaceWith('Invalid amount');
+					}
+					amount *= exchangeRates.rates[currency.toUpperCase()];
+					amount = round(amount, 2);
+					codeblock.replaceWith(amount);
+				}
+			}
+		});
+	}
 
     // This is a ribbon icon that returns updates rates and sends a notice
     this.addRibbonIcon("circle-dollar-sign", "Update valuta", async () => {
-      await this.fetchAndHandleRates();
+      // await this.fetchRates();
+      await this.loadSettings();
       new Notice("Valuta updated!");
     });
 
@@ -44,36 +60,25 @@ export default class ValutaPlugin extends Plugin {
       name: "Update valuta",
       callback: async () => {
         try {
-          const result = await this.fetchRates(this.settings.baseCurrency);
-          if (result) {
-            this.handleFetchedRates(result);
+          const exchangeRates = await this.fetchRates(this.settings.baseCurrency);
+          if (exchangeRates) {
+			await this.loadSettings();
           }
         } catch (error) {
-          console.error('Error fetching or handling rates:', error);
+		  new Notice('Error fetching rates');
         }
-        new Notice("Valuta updated!");
+        new Notice('Valuta updated');
       },
     });
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.settings = Object.assign({}, await this.loadData(), new ValutaPlugin());
   }
 
   async saveSettings() {
     await this.saveData(this.settings);
-  }
-
-  // Fetch and handle rates using fetchRates() and handleFetchedRates()
-  async fetchAndHandleRates(): Promise<void> {
-    try {
-      const result = await this.fetchRates(this.settings.baseCurrency);
-      if (result) {
-        this.handleFetchedRates(result);
-      }
-    } catch (error) {
-      console.error('Error fetching or handling rates:', error);
-    }
+	console.log('Settings saved')
   }
 
   // Fetch rates from API. Rates quote against the Euro by default.
@@ -81,26 +86,44 @@ export default class ValutaPlugin extends Plugin {
   async fetchRates(baseCurrency: string): Promise<ExchangeRates | undefined> {
     const host = 'api.frankfurter.app';
 
-    try {
-      const response = await fetch(`https://${host}/latest?from=${baseCurrency}`);
-      const data = await response.json();
+	try {
+		const response = await fetch(`https://${host}/latest?from=${baseCurrency}`);
+			const rates = await response.json();
 
-      // Work with the data as needed
-      // console.log(data);
+		// Work with the data as needed
+		// console.log(data);
 
-      // You can return the data or perform further operations here
-      return data as ExchangeRates;
-    } catch (error) {
-      console.error('Error fetching rates:', error);
-      // Handle the error as needed
-      return undefined;
-    }
+		// You can return the data or perform further operations here
+		return rates;
+	} catch (error) {
+		// Handle the error as needed
+		return undefined;
+	}
   }
 
-  handleFetchedRates(data: ExchangeRates): void {
-    // Your logic to handle the fetched data within your Obsidian plugin
-    console.log(data);
-    // Update Obsidian UI or perform any other necessary actions
+  public onunload() {
+	console.log(`Valuta: version ${this.manifest.version} unloaded.`);
   }
+
+  // Fetch and handle rates using fetchRates() and handleFetchedRates()
+  // async fetchAndHandleRates(): Promise<void> {
+  //   try {
+  //     const result = await this.fetchRates(this.settings.baseCurrency);
+  //     if (result) {
+  //       this.handleFetchedRates(result);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching or handling rates:', error);
+  //   }
+  // }
+
+
+//   handleFetchedRates(data: ExchangeRates): void {
+//     // Your logic to handle the fetched data within your Obsidian plugin
+//     console.log(data);
+//     // Update Obsidian UI or perform any other necessary actions
+//   }
+  //
+
 }
 
