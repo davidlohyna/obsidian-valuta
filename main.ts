@@ -3,12 +3,15 @@ import { DEFAULT_CURRENCY, ExchangeRates, ValutaPluginSettings, ValutaSettingTab
 import { isNumber, round } from "./helpers";
 
 
-
 export default class ValutaPlugin extends Plugin {
   settings: ValutaPluginSettings;
   statusBar: HTMLElement;
 
   async onload() {
+	
+	// TODO 1: Make initial fetch without currency (defaults to EUR)
+	// TODO 2: Make default setting the base currency (EUR)
+	// TODO 3: Make all currencies dropdown options based on the API call
 
     // This loads settings
     await this.loadSettings();
@@ -16,38 +19,35 @@ export default class ValutaPlugin extends Plugin {
     // This adds setting tab
     this.addSettingTab(new ValutaSettingTab(this.app, this));
 
-
 	const baseCurrencySetting = this.settings.baseCurrency;
+
 	// This is a post processor
-	if (baseCurrencySetting) {
-		// Fetch rates on startup if baseCurrency is set
-		const exchangeRates = await this.fetchRates(baseCurrencySetting);
-		console.log(exchangeRates.base)
+	this.registerMarkdownPostProcessor( async (element, context) => {
+		const codeblocks = element.findAll("code");
 
-		this.registerMarkdownPostProcessor((element, context) => {
-			const codeblocks = element.findAll("code");
+		for (let codeblock of codeblocks) {
+			const text = codeblock.innerText.trim();
 
-			for (let codeblock of codeblocks) {
-				const text = codeblock.innerText.trim();
+			// Ensure to check codeblocks with correct plugin syntax only
+			if (text[3] === ":" && isNumber(text[4])) {
+				const currency: string = text.substring(0, text.indexOf(':'));
 
-				// Ensure to check codeblocks with correct plugin syntax only
-				if (text[3] === ":" && isNumber(text[4])) {
-					const currency: string = text.substring(0, text.indexOf(':'));
-
-					// Validate whether amount is numberic
-					let amount: string  = text.substring(4);
-					if (!isNumber(amount)) {
-						codeblock.replaceWith('Invalid amount');
-					} else if (currency.toUpperCase() === baseCurrencySetting) {
-						codeblock.replaceWith(amount);
-					}
-					amount *= exchangeRates.rates[currency.toUpperCase()];
-					amount = round(amount, 2);
+				// Validate whether amount is numberic
+				let amount: string  = text.substring(4);
+				if (!isNumber(amount)) {
+					codeblock.replaceWith('Invalid amount');
+				} else if (currency.toUpperCase() === baseCurrencySetting) {
 					codeblock.replaceWith(amount);
 				}
+				// Fetch rates 
+				const exchangeRates = await this.fetchRates(baseCurrencySetting);
+
+				amount *= exchangeRates.rates[currency.toUpperCase()];
+				amount = round(amount, 2);
+				codeblock.replaceWith(amount);
 			}
-		});
-	}
+		}
+	});
 
     // This is a ribbon icon that returns updates rates and sends a notice
     this.addRibbonIcon("circle-dollar-sign", "Update valuta", async () => {
