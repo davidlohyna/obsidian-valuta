@@ -1,4 +1,5 @@
-import ValutaPlugin from "./main";
+import { CURRENCIES } from "./currencies"
+import { ValutaPlugin } from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
 
@@ -6,10 +7,9 @@ export interface ValutaPluginSettings {
   baseCurrency: string;
 }
 
-// export const DEFAULT_SETTINGS: Partial<ValutaPluginSettings> = {
-//   baseCurrency: "USD",
-// };
-
+export const DEFAULT_CURRENCY: Partial<ValutaPlugin> = {
+	baseCurrency: "EUR",
+}
 
 // API query settings
 export interface ExchangeRates {
@@ -17,10 +17,6 @@ export interface ExchangeRates {
     base:   string;
     date:   Date;
     rates:  { [key: string]: number };
-}
-
-export interface Valuta {
-  amount: number;
 }
 
 export class ValutaSettingTab extends PluginSettingTab {
@@ -41,17 +37,20 @@ export class ValutaSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Base currency")
-      .setDesc("Base currency code of choice")
-      .addText((currencyCode) =>
-        currencyCode
-          .setPlaceholder("e.g., EUR, eur")
-          .setValue(this.plugin.settings.baseCurrency)
-          .onChange(async (value) => {
-            this.plugin.settings.baseCurrency = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
+      .setDesc("Base currency plugin convers to by default")
+	  .addDropdown((dropdown) => {
+		CURRENCIES.forEach(currency => {
+			dropdown.addOption(currency, currency);
+			});
+		dropdown
+			.setValue(this.plugin.settings.baseCurrency)
+			.onChange(async (value) => {
+				// Handle the change in value here
+				console.log('Base currency:', value);
+				this.plugin.settings.baseCurrency = value;
+				await this.plugin.saveSettings();
+			})
+	  });
 	containerEl.createEl('p', {
 	  cls: 'tasks-setting-important',
 	  text: 'Changing base currency requires a restart/reload of Obsidian.',

@@ -1,5 +1,5 @@
 import { Menu, moment, Notice, Plugin } from "obsidian";
-import { ExchangeRates, Valuta, ValutaPluginSettings, ValutaSettingTab } from "./settings";
+import { DEFAULT_CURRENCY, ExchangeRates, ValutaPluginSettings, ValutaSettingTab } from "./settings";
 import { isNumber, round } from "./helpers";
 
 
@@ -12,16 +12,16 @@ export default class ValutaPlugin extends Plugin {
 
     // This loads settings
     await this.loadSettings();
-	console.log('Settings loaded')
 
     // This adds setting tab
     this.addSettingTab(new ValutaSettingTab(this.app, this));
 
 
+	const baseCurrencySetting = this.settings.baseCurrency;
 	// This is a post processor
-	if (this.settings.baseCurrency) {
+	if (baseCurrencySetting) {
 		// Fetch rates on startup if baseCurrency is set
-		const exchangeRates = await this.fetchRates(this.settings.baseCurrency);
+		const exchangeRates = await this.fetchRates(baseCurrencySetting);
 		console.log(exchangeRates.base)
 
 		this.registerMarkdownPostProcessor((element, context) => {
@@ -38,6 +38,8 @@ export default class ValutaPlugin extends Plugin {
 					let amount: string  = text.substring(4);
 					if (!isNumber(amount)) {
 						codeblock.replaceWith('Invalid amount');
+					} else if (currency.toUpperCase() === baseCurrencySetting) {
+						codeblock.replaceWith(amount);
 					}
 					amount *= exchangeRates.rates[currency.toUpperCase()];
 					amount = round(amount, 2);
@@ -60,7 +62,7 @@ export default class ValutaPlugin extends Plugin {
       name: "Update valuta",
       callback: async () => {
         try {
-          const exchangeRates = await this.fetchRates(this.settings.baseCurrency);
+          const exchangeRates = await this.fetchRates(baseCurrencySetting);
           if (exchangeRates) {
 			await this.loadSettings();
           }
@@ -73,7 +75,8 @@ export default class ValutaPlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, await this.loadData(), new ValutaPlugin());
+    this.settings = Object.assign({}, DEFAULT_CURRENCY, await this.loadData(), new ValutaPlugin());
+	console.log('Settings loaded')
   }
 
   async saveSettings() {
@@ -104,26 +107,5 @@ export default class ValutaPlugin extends Plugin {
   public onunload() {
 	console.log(`Valuta: version ${this.manifest.version} unloaded.`);
   }
-
-  // Fetch and handle rates using fetchRates() and handleFetchedRates()
-  // async fetchAndHandleRates(): Promise<void> {
-  //   try {
-  //     const result = await this.fetchRates(this.settings.baseCurrency);
-  //     if (result) {
-  //       this.handleFetchedRates(result);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching or handling rates:', error);
-  //   }
-  // }
-
-
-//   handleFetchedRates(data: ExchangeRates): void {
-//     // Your logic to handle the fetched data within your Obsidian plugin
-//     console.log(data);
-//     // Update Obsidian UI or perform any other necessary actions
-//   }
-  //
-
 }
 
