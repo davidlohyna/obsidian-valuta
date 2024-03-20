@@ -37,7 +37,8 @@ export class ValutaSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Base currency")
-      .setDesc("Base currency plugin convers to by default")
+	  // TODO: fix Desc
+      .setDesc("Currency that plugin rates quote against")
 	  .addDropdown((dropdown) => {
 		CURRENCIES.forEach(currency => {
 			dropdown.addOption(currency, currency);
