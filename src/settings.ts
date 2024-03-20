@@ -3,7 +3,7 @@ import { ValutaPlugin } from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
 
-export interface ValutaPluginSettings {
+export interface ValutaSettings {
   baseCurrency: string;
 }
 
@@ -11,8 +11,8 @@ export const DEFAULT_CURRENCY: Partial<ValutaPlugin> = {
 	baseCurrency: "EUR",
 }
 
-// API query settings
-export interface ExchangeRates {
+// API query interface
+export interface CurrencyExchangeData {
     amount: number;
     base:   string;
     date:   Date;

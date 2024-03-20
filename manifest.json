@@ -1,11 +1,11 @@
 {
-	"id": "valuta-plugin",
+	"id": "valuta",
 	"name": "Valuta",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Simple currency exchange using Frankfurter API.",
+	"author": "David Lohyna",
+	"authorUrl": "https://github.com/davidlohyna",
+	"helpUrl": "https://github.com/davidlohyna/obsidian-valuta",
 	"isDesktopOnly": false
 }
