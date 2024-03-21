@@ -7,12 +7,12 @@ export interface ValutaSettings {
   baseCurrency: string;
 }
 
-export const DEFAULT_CURRENCY: Partial<ValutaPlugin> = {
+export const DEFAULT_SETTINGS: Partial<ValutaPlugin> = {
 	baseCurrency: "EUR",
 }
 
 // API query interface
-export interface CurrencyExchangeData {
+export interface ValutaData {
     amount: number;
     base:   string;
     date:   Date;
