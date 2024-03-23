@@ -1,11 +1,10 @@
-import { Menu, moment, Notice, Plugin } from "obsidian";
+import { Plugin } from "obsidian";
 import { DEFAULT_SETTINGS, ValutaData, ValutaSettings, ValutaSettingTab } from "./settings";
 import { isNumber, round } from "./helpers";
 
 
 export default class ValutaPlugin extends Plugin {
   settings: ValutaSettings;
-  statusBar: HTMLElement;
 
   async onload() {
 	
@@ -27,16 +26,16 @@ export default class ValutaPlugin extends Plugin {
 
 			// Ensure to check codeblocks with correct plugin syntax only
 			if (text[3] === ":" && isNumber(text[4])) {
-				const currency = text.substring(0, text.indexOf(':')).toUpperCase();
-				if (currency in valutaData) {
+				const currencyCode = text.substring(0, text.indexOf(':')).toUpperCase();
+				if (currencyCode in valutaData) {
 					// Validate whether amount is numberic
 					let amount: string  = text.substring(4);
 					if (!isNumber(amount)) {
 						codeblock.replaceWith('Invalid amount');
-					} else if (currency === this.settings.baseCurrency) {
+					} else if (currencyCode === this.settings.baseCurrency) {
 						codeblock.replaceWith(amount);
 					}
-					amount *= valutaData[currency];
+					amount *= valutaData[currencyCode];
 					amount = round(amount, 2);
 					codeblock.replaceWith(amount);
 				}

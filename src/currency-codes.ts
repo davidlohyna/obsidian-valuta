@@ -1,6 +1,5 @@
-
 // Array of available currencies
-export const CURRENCIES: string[] = [
+export const CURRENCY_CODES: string[] = [
   "AUD",
   "BGN",
   "BRL",

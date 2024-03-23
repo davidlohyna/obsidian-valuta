@@ -1,4 +1,4 @@
-import { CURRENCIES } from "./currencies"
+import { CURRENCY_CODES } from "./currency-codes"
 import { ValutaPlugin } from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
@@ -40,8 +40,8 @@ export class ValutaSettingTab extends PluginSettingTab {
 	  // TODO: fix Desc
       .setDesc("Currency that plugin rates quote against")
 	  .addDropdown((dropdown) => {
-		CURRENCIES.forEach(currency => {
-			dropdown.addOption(currency, currency);
+		CURRENCY_CODES.forEach(currencyCode => {
+			dropdown.addOption(currencyCode, currencyCode);
 			});
 		dropdown
 			.setValue(this.plugin.settings.baseCurrency)
@@ -54,7 +54,7 @@ export class ValutaSettingTab extends PluginSettingTab {
 	  });
 	containerEl.createEl('p', {
 	  cls: 'tasks-setting-important',
-	  text: 'Changing base currency requires a restart/reload of Obsidian.',
+	  text: 'To see latest exchange rates or to apply changes after changing the base currency, you need to restart or reload Obsidian (via "Reload without saving" command).',
 	});
   }
 }
