@@ -3,7 +3,7 @@
 	"name": "Valuta",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Simple currency exchange using Frankfurter API.",
+	"description": "Simple currency exchange inside your Vault",
 	"author": "David Lohyna",
 	"authorUrl": "https://github.com/davidlohyna",
 	"helpUrl": "https://github.com/davidlohyna/obsidian-valuta",

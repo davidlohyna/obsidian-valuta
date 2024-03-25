@@ -1,4 +1,4 @@
-// Array of available currencies
+// Array of available currency codes for API call
 export const CURRENCY_CODES: string[] = [
   "AUD",
   "BGN",
