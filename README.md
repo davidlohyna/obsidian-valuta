@@ -1,96 +1,81 @@
-# Obsidian Sample Plugin
+# Obsidian Valuta
+#### Video Demo: <https://youtu.be/ME1pWumbu90>
+## Description
+Obsidian Valuta is a convenient plugin designed to enhance the functionality of a markdown-based note-taking app [Obsidian](https://obsidian.md). It seamlessly integrates with the [Frankfurter API](https://www.frankfurter.app) to provide users with up-to-date currency conversion rates. With Obsidian Valuta, users can quickly access conversion rates directly within their notes, simplifying tasks like budgeting for international travel or managing expenses across different currencies. This intuitive integration streamlines the workflow, allowing users to make informed financial decisions without leaving the Obsidian environment.
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+### Features
+* **Currency Conversion**: Convert currency values within your notes effortlessly using a simple [syntax](#usage).
+* **Real-Time Exchange Rates**: Fetches up-to-date exchange rates from the [Frankfurter API](https://www.frankfurter.app/).
+* **Customisable Base Currency**: Tailor the plugin to your needs by selecting your preferred base currency for conversions.
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+## Understanding
+#### styles.css
+Adds styling to the text inside settings.ts
+#### currency-codes.ts
+This file exports array of available currency codes for API call. The reason for them being hard coded is a design choice, as it is simpler in combination to load and save functions inside main.ts and settings.ts.
+#### helpers.ts
+Functions inside this file ensure that main.ts runs as intended.
+- `isNum()` takes a string and returns `true` if its value is numeric and `false` if not,
+- `round()` takes number as input and rounds it to two decimals.
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+These need to be made manually as there is no in-built function in Typescript for that.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+#### settings.ts
+Top section of the file imports necessary modules and classes from other files and from the Obsidian API. Specifically, it imports CURRENCY_CODES from currency-codes.ts file, the ValutaPlugin class from the main.ts file, and various classes (App, PluginSettingTab, and Setting) from the Obsidian API.
 
-## First time developing plugins?
+Moreover, the file defines two interfaces which are exported for further use in main.ts.
+1. ValutaSettings, which describes the structure of the settings used by the Valuta plugin and currently only includes one property `baseCurrency` (Which represents the base currency for exchange rates).
+2. ValutaData, which describes the structure of data returned by the API used for fetching exchange rates.
 
-Quick starting guide for new plugin devs:
+Additionally, a constant DEFAULT_SETTINGS sets the default base currency to "EUR".
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+Continuing on, a class ValutaSettingTab is defined, which extends PluginSettingTab provided by Obsidian for creating plugin settings tabs. It also includes a constructor that takes app and plugin as parameters and assigns them to the class properties.
 
-## Releasing new releases
+A method display() within the ValutaSettingTab class starts by clearing the content of the settings tab and adding a CSS class to the container element.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+Next line creates a `<h2>` element within the settings tab container with the text "Valuta Plugin - Settings".
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+The following chunk of code creates a new setting within the container element. It sets the name of the setting and provides a description. Next, it adds a dropdown menu to the setting for selecting the base currency. It iterates over CURRENCY_CODES array imported at top of the file to populate the dropdown options. It sets the initial value of the dropdown to the plugin's current base currency setting and defines an onChange event handler to update the base currency setting when the dropdown value changes.
 
-## Adding your plugin to the community plugin list
+Last block creates a `<p>` element within the settings tab container with a class `valuta-setting-important`, which is styled inside style.css and provides a disclaimer to users.
 
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+#### main.ts
+Conveniantly, main.ts imports necessary modules and classes. It imports Plugin from Obsidian, DEFAULT_SETTINGS, ValutaData, ValutaSettings, and ValutaSettingTab from the settings.ts file, and isNumber and round functions from the helpers.ts file.
 
-## How to use
+Main code starts with a class ValutaPlugin that extends Plugin provided by Obsidian. It includes a property settings of type ValutaSettings, representing the settings used by the Valuta plugin.
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+An asynchronous method onload() which is called when the plugin is loaded, contains the essence of the plugin. It
+- awaits the loading of plugin settings with `await this.loadSettings();` function,
+- adds a setting tab for the plugin using the `ValutaSettingTab` class defined in the `settings.ts` file,
+- fetches data using the `fetchData()` method, passing the base currency from plugin settings.
+    - This method fetches exchange rate data asynchronously from an API based on the provided base currency and with the help of ValutaData interface defined in settings.ts. It handles any errors that occur during the fetch operation or returns data as json.
 
-## Manually installing the plugin
+Next, markdown post processing is implemented using `registerMarkdownPostProcessor`. It ensures that the plugin syntax as written in markdown, is processed correctly and shows the values the user desires. It loops through all codeblocks (defined as \`text\` in markdown) inside a note, trims the \` around the text and stores it inside a variable.
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+Then, it validates whether the variable contains syntactically correct value (Refer to [Usage](#usage)) for the plugin's further actions. If so, it separates the `CURRENCY_CODE` and `AMOUNT` to get correct convertion rates against the default currency defined by user and to calculate the final value.
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+It also adds a layer of validation so that if user writes incorrect currency code, the plugin does not process the codeblock and if the amount is not numeric, it processes the codeblock as 'Invalid amound'. Additionally, if user tries to exchange the amount to the same currency as is their base currency, the plugin returns the amount as is, without any changes.
 
-## Funding URL
+### Other files
+The plugin contains additional files that come from Obsidian Sample Plugin [template](https://github.com/obsidianmd/obsidian-sample-plugin). These allow for quick plugin set up and ensure correct usage. For further reference visit [Obsidian Docs](https://docs.obsidian.md/Plugins/Getting+started/Build+a+plugin) on how to build a plugin.
+## Installation
+You can install the plugin from Community Plugins tab inside your Obsidian. Make sure the plugin is enabled.
+## Usage
+Once Valuta is installed and enabled, you can seamlessly integrate currency conversions into your notes using the following syntax:
 
-You can include funding URLs where people who use your plugin can financially support it.
+```
+`CURRENCY_CODE:AMOUNT`
+```
+Replace CURRENCY_CODE with the desired currency code (e.g., USD, EUR) and AMOUNT with the numeric value you wish to convert. The plugin will automatically process this syntax and display the converted currency value from your base currency.
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+The following code will convert 100 of your base currency to US dollars.
+```
+`USD:100`
 ```
 
-If you have multiple URLs, you can also do:
-
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
+The syntax is case insensitive (i.e., the following syntax is equally valid).
+```
+`usd:100`
 ```
 
-## API Documentation
-
-See https://github.com/obsidianmd/obsidian-api
+**Note:** Base currency is set to EUR by default and you can change it inside the plugin settings. Make sure to restart or reload Obsidian (using "Reload without saving" command) to see the changes.
