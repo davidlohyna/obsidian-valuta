@@ -1,5 +1,4 @@
 # Obsidian Valuta
-#### Video Demo: <https://youtu.be/ME1pWumbu90>
 ## Description
 Obsidian Valuta is a convenient plugin designed to enhance the functionality of a markdown-based note-taking app [Obsidian](https://obsidian.md). It seamlessly integrates with the [Frankfurter API](https://www.frankfurter.app) to provide users with up-to-date currency conversion rates. With Obsidian Valuta, users can quickly access conversion rates directly within their notes, simplifying tasks like budgeting for international travel or managing expenses across different currencies. This intuitive integration streamlines the workflow, allowing users to make informed financial decisions without leaving the Obsidian environment.
 
