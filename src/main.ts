@@ -15,7 +15,7 @@ export default class ValutaPlugin extends Plugin {
     this.addSettingTab(new ValutaSettingTab(this.app, this));
 
     // Fetch data
-    const valutaData = await this.fetchData(this.settings.baseCurrency);
+    await this.fetchData(this.settings.baseCurrency);
 
     // This is a post processor
     this.registerMarkdownPostProcessor(async (element, context) => {
@@ -27,6 +27,7 @@ export default class ValutaPlugin extends Plugin {
         // Ensure to check codeblocks with correct plugin syntax only
         if (text[3] === ":" && isNumber(text[4])) {
           const currencyCode = text.substring(0, text.indexOf(':')).toUpperCase();
+		  const valutaData = await this.fetchData(this.settings.baseCurrency);
           if (currencyCode in valutaData) {
             // Validate whether amount is numberic
             let amount: string = text.substring(4);
